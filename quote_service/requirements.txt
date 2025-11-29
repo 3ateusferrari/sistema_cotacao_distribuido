@@ -1,0 +1,7 @@
+fastapi
+uvicorn
+httpx
+tenacity
+redis
+asyncpg
+databases[postgresql]

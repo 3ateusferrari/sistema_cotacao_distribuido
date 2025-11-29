@@ -1,0 +1,102 @@
+version: "3.9"
+
+services:
+  #########################################
+  #  REDIS – Pub/Sub
+  #########################################
+  redis:
+    image: redis:7
+    container_name: redis_broker
+    ports:
+      - "6379:6379"
+    networks:
+      - cotacoes_net
+
+  #########################################
+  # SHARD 1 – Bitcoin logs
+  #########################################
+  postgres_shard1:
+    image: postgres:15
+    container_name: shard1_db
+    environment:
+      POSTGRES_USER: shard1
+      POSTGRES_PASSWORD: shard1pass
+      POSTGRES_DB: logs
+    ports:
+      - "5433:5432"
+    volumes:
+      - shard1_data:/var/lib/postgresql/data
+    networks:
+      - cotacoes_net
+
+  # SHARD 2 – Ethereum logs
+  postgres_shard2:
+    image: postgres:15
+    container_name: shard2_db
+    environment:
+      POSTGRES_USER: shard2
+      POSTGRES_PASSWORD: shard2pass
+      POSTGRES_DB: logs
+    ports:
+      - "5434:5432"
+    volumes:
+      - shard2_data:/var/lib/postgresql/data
+    networks:
+      - cotacoes_net
+
+  # SERVIDOR EXTERNO (cotação)
+  external_service:
+    build: ./external_service
+    container_name: external_service
+    ports:
+      - "8001:8000"
+    networks:
+      - cotacoes_net
+    depends_on:
+      - redis
+
+  # SERVIÇO DE COTAÇÃO PRIMÁRIO
+  # (Circuit Breaker + Pub/Sub + Sharding)
+  quote_service:
+    build: ./quote_service
+    container_name: quote_service
+    ports:
+      - "8002:8000"
+    networks:
+      - cotacoes_net
+    depends_on:
+      - external_service
+      - redis
+      - postgres_shard1
+      - postgres_shard2
+
+  #Scatter/Gaher
+  aggregator_service:
+    build: ./aggregator_service
+    container_name: aggregator_service
+    ports:
+      - "8003:8000"
+    networks:
+      - cotacoes_net
+    depends_on:
+      - quote_service
+      - postgres_shard1
+      - postgres_shard2
+
+  # CLIENTE SUBSCRIBER (recebe notificações)
+  client_subscriber:
+    build: ./client_subscriber
+    container_name: client_subscriber
+    networks:
+      - cotacoes_net
+    depends_on:
+      - redis
+
+# Redes e Volumes
+networks:
+  cotacoes_net:
+    driver: bridge
+
+volumes:
+  shard1_data:
+  shard2_data:
