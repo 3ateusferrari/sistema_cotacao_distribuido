@@ -96,11 +96,17 @@ async def get_full_report():
         # Mapeia os resultados para evitar erros se alguma tarefa falhar
         avg_btc, avg_eth, logs_btc, logs_eth = results
 
+    # Helper para extrair a média de forma segura
+    def get_avg(result):
+        if isinstance(result, Exception) or not isinstance(result, dict):
+            return "Erro"
+        return result.get("average_price", "Chave 'average_price' não encontrada")
+
     # Composição da resposta final
     response_data = {
         "media_precos": {
-            "bitcoin": avg_btc if not isinstance(avg_btc, Exception) else "Erro",
-            "ethereum": avg_eth if not isinstance(avg_eth, Exception) else "Erro",
+            "bitcoin": get_avg(avg_btc),
+            "ethereum": get_avg(avg_eth),
         },
         "ultimos_logs": {
             "bitcoin": logs_btc if not isinstance(logs_btc, Exception) else "Erro",
