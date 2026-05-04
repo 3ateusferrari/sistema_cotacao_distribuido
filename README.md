@@ -92,6 +92,35 @@ O sistema é composto por quatro serviços principais que se comunicam de forma 
 
     Este comando irá construir as imagens dos contêineres e iniciar todos os serviços.
 
+## Testes
+
+O projeto conta com uma suíte de testes que cobre unitários, integração e ponta-a-ponta (E2E).
+
+### Executando Testes de Unidade e Integração
+
+Para rodar os testes de cada serviço utilizando Docker:
+
+```bash
+./run_tests.sh
+```
+
+Este script irá instalar as dependências necessárias e executar o `pytest` dentro de cada container de serviço.
+
+### Executando Testes E2E
+
+Os testes E2E validam o fluxo completo do sistema e requerem que os serviços estejam rodando (`docker-compose up`).
+
+Com o sistema rodando em outro terminal:
+
+1. Instale as dependências de teste localmente:
+   ```bash
+   pip install -r requirements-test.txt
+   ```
+2. Execute os testes E2E:
+   ```bash
+   pytest tests/e2e/test_flow.py
+   ```
+
 ## Serviços
 
 ### External Service
